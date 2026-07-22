@@ -1,5 +1,4 @@
 using System.IO.Compression;
-using System.Net;
 using System.Threading.RateLimiting;
 using ApparelShop.Data;
 using ApparelShop.Models;
@@ -11,6 +10,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Render/Railway: listen on PORT env var
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
 
 // ---- Services ----
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")

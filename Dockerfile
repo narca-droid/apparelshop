@@ -15,8 +15,6 @@ RUN mkdir -p /app/data
 
 COPY --from=build /app/publish .
 
-# Let the platform set the PORT env var, fallback to 80
-ENV ASPNETCORE_URLS=http://+:80
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 ENV ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
