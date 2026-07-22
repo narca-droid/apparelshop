@@ -1,0 +1,34 @@
+@model List<ApparelShop.Models.Category>
+@{ ViewData["Title"] = "Categories"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Categories</h3>
+    <a asp-action="Create" class="btn btn-accent"><i class="bi bi-plus-lg me-1"></i>Add Category</a>
+</div>
+
+<div class="stat-card p-0">
+    <table class="table mb-0 align-middle">
+        <thead class="table-light">
+            <tr><th>Image</th><th>Name</th><th>Products</th><th>Order</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td><img src="@(c.ImageUrl ?? "/images/hero.svg")" style="width:50px;height:50px;object-fit:cover;" /></td>
+                    <td>@c.Name <div class="small text-muted">/shop?category=@c.Slug</div></td>
+                    <td>@c.Products.Count</td>
+                    <td>@c.DisplayOrder</td>
+                    <td>@(c.IsActive ? "Active" : "Hidden")</td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-outline-dark-custom">Edit</a>
+                        <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this category?');">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

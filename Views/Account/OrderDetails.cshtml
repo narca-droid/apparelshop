@@ -1,0 +1,99 @@
+@model ApparelShop.Models.Order
+@using ApparelShop.Models
+@using ApparelShop.ViewComponents
+@{
+    ViewData["Title"] = $"Order {Model.OrderNumber}";
+}
+
+<div class="container my-5">
+    @await Component.InvokeAsync("Breadcrumbs", new List<BreadcrumbItem>
+    {
+        new() { Text = "Home", Url = "/" },
+        new() { Text = "My Account", Url = "/Account/Dashboard" },
+        new() { Text = $"Order {Model.OrderNumber}" }
+    })
+
+    <div class="section-heading">
+        <div class="subtitle">Order Details</div>
+        <h2>@Model.OrderNumber</h2>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="cart-summary mb-4">
+                <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;">Items</h6>
+                @foreach (var item in Model.Items)
+                {
+                    <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom:1px solid rgba(0,0,0,0.06);">
+                        <div>
+                            <span class="fw-medium">@item.ProductName</span>
+                            <span class="small text-muted ms-2">
+                                @if (item.Size != null) { <span>Size: @item.Size</span> }
+                                @if (item.Color != null) { <span class="ms-1">Color: @item.Color</span> }
+                                <span class="ms-1">x@(item.Quantity)</span>
+                            </span>
+                        </div>
+                        <span class="fw-semibold">AED @item.LineTotal.ToString("0.00")</span>
+                    </div>
+                }
+            </div>
+
+            <div class="timeline">
+                @foreach (var status in Enum.GetValues<OrderStatus>())
+                {
+                    var isCompleted = status < Model.Status;
+                    var isCurrent = status == Model.Status;
+                    var isCancelled = Model.Status == OrderStatus.Cancelled && status == OrderStatus.Cancelled;
+                    <div class="timeline-item @(isCompleted ? "completed" : "") @(isCurrent ? "current" : "") @(isCancelled ? "cancelled" : "")">
+                        <div class="timeline-icon">
+                            @if (isCompleted) { <i class="bi bi-check-lg"></i> }
+                            else if (isCurrent) { <i class="bi bi-circle-fill" style="font-size:0.5rem;"></i> }
+                            else { <i class="bi bi-circle" style="font-size:0.5rem;"></i> }
+                        </div>
+                        <div>
+                            <div class="fw-medium" style="font-size:0.9rem;">@status</div>
+                            @if (isCurrent && Model.Status == OrderStatus.Pending)
+                            {
+                                <div class="small text-muted">Awaiting confirmation</div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="cart-summary mb-4">
+                <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;">Order Summary</h6>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Date</span>
+                    <span>@Model.CreatedAt.ToString("dd MMM yyyy")</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Subtotal</span>
+                    <span>AED @Model.Subtotal.ToString("0.00")</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Shipping</span>
+                    <span>AED @Model.ShippingFee.ToString("0.00")</span>
+                </div>
+                <div class="d-flex justify-content-between" style="padding-top:0.75rem;border-top:2px solid var(--color-primary);">
+                    <span class="fw-bold">Total</span>
+                    <span class="fw-bold">AED @Model.Total.ToString("0.00")</span>
+                </div>
+            </div>
+
+            <div class="cart-summary">
+                <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;">Shipping Address</h6>
+                <p class="small text-muted mb-1">@Model.CustomerName</p>
+                <p class="small text-muted mb-1">@Model.ShippingAddress</p>
+                <p class="small text-muted mb-1">@Model.City, @Model.Emirate</p>
+                <p class="small text-muted mb-0">@Model.CustomerPhone</p>
+            </div>
+
+            <a href="/Account/Dashboard" class="btn btn-ghost w-100 mt-3">
+                <i class="bi bi-arrow-left me-1"></i> Back to Account
+            </a>
+        </div>
+    </div>
+</div>

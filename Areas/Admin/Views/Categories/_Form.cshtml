@@ -1,0 +1,41 @@
+@model ApparelShop.Models.Category
+@{ bool isEdit = Model.Id != 0; }
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? Model.Id : (int?)null)" method="post" enctype="multipart/form-data" style="max-width:600px;">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <div class="stat-card mb-3">
+        <div class="mb-3">
+            <label class="form-label">Category Name</label>
+            <input asp-for="Name" class="form-control" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">URL Slug (leave blank to auto-generate)</label>
+            <input asp-for="Slug" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Display Order</label>
+            <input asp-for="DisplayOrder" type="number" class="form-control" style="max-width:120px;" />
+        </div>
+        <div class="form-check mb-3">
+            <input asp-for="IsActive" class="form-check-input" type="checkbox" checked="@Model.IsActive" />
+            <label class="form-check-label">Active (visible in store navigation)</label>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Category Image</label>
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <img src="@Model.ImageUrl" class="d-block mb-2" style="width:100px;height:100px;object-fit:cover;" />
+            }
+            <input type="file" name="image" class="form-control" accept="image/*" />
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-accent px-4">@(isEdit ? "Save Changes" : "Create Category")</button>
+    <a asp-action="Index" class="btn btn-outline-dark-custom px-4">Cancel</a>
+</form>

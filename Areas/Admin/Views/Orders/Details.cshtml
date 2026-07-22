@@ -1,0 +1,118 @@
+@model ApparelShop.Models.Order
+@using ApparelShop.Models
+@{ ViewData["Title"] = "Order " + Model.OrderNumber; }
+
+<h3 class="mb-4">Order @Model.OrderNumber</h3>
+
+@if (Model.Status == OrderStatus.Pending)
+{
+    <div class="alert alert-warning d-flex align-items-center mb-4">
+        <i class="bi bi-telephone-fill me-2"></i>
+        <div class="flex-grow-1">
+            <strong>Action required:</strong> Call the customer to confirm this order before shipping.
+        </div>
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="stat-card mb-3">
+            <h6 class="mb-3">Items</h6>
+            <table class="table">
+                <thead><tr><th>Product</th><th>Size/Color</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.ProductName</td>
+                            <td>@item.Size @item.Color</td>
+                            <td>@item.Quantity</td>
+                            <td>AED @item.UnitPrice.ToString("0.00")</td>
+                            <td>AED @item.LineTotal.ToString("0.00")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="text-end">
+                <p class="mb-1">Subtotal: AED @Model.Subtotal.ToString("0.00")</p>
+                <p class="mb-1">Shipping: AED @Model.ShippingFee.ToString("0.00")</p>
+                <h5>Total: AED @Model.Total.ToString("0.00")</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card mb-3">
+            <h6 class="mb-3">Customer</h6>
+            <p class="mb-1"><strong>@Model.CustomerName</strong></p>
+            <p class="mb-1 small">@Model.CustomerEmail</p>
+            <p class="mb-2">
+                <a href="tel:@Model.CustomerPhone" class="btn btn-sm btn-outline-dark-custom mt-1">
+                    <i class="bi bi-telephone me-1"></i>@Model.CustomerPhone
+                </a>
+            </p>
+            <hr />
+            <p class="mb-1 small">@Model.ShippingAddress</p>
+            <p class="mb-1 small">@Model.City, @Model.Emirate</p>
+            @if (!string.IsNullOrEmpty(Model.Notes))
+            {
+                <hr />
+                <p class="small text-muted">Customer Notes: @Model.Notes</p>
+            }
+        </div>
+
+        @if (Model.Status == OrderStatus.Pending)
+        {
+            <div class="stat-card mb-3">
+                <h6 class="mb-3">Confirm Order</h6>
+                <form asp-action="Confirm" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label small">Confirmation Notes</label>
+                        <textarea name="confirmationNotes" class="form-control form-control-sm" rows="3" placeholder="e.g. Customer confirmed, delivery Thursday 3pm"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 mb-2">
+                        <i class="bi bi-check-lg me-1"></i>Confirm Order
+                    </button>
+                </form>
+                <form asp-action="Reject" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-2">
+                        <textarea name="confirmationNotes" class="form-control form-control-sm" rows="2" placeholder="Reason for rejection (optional)"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        <i class="bi bi-x-lg me-1"></i>Reject Order
+                    </button>
+                </form>
+            </div>
+        }
+
+        @if (Model.ConfirmedAt.HasValue || !string.IsNullOrEmpty(Model.ConfirmationNotes))
+        {
+            <div class="stat-card mb-3">
+                <h6 class="mb-3">Confirmation Details</h6>
+                @if (Model.ConfirmedAt.HasValue)
+                {
+                    <p class="small mb-1"><strong>Confirmed:</strong> @Model.ConfirmedAt.Value.ToString("dd MMM yyyy, HH:mm")</p>
+                }
+                @if (!string.IsNullOrEmpty(Model.ConfirmationNotes))
+                {
+                    <p class="small text-muted mb-0">@Model.ConfirmationNotes</p>
+                }
+            </div>
+        }
+
+        <div class="stat-card">
+            <h6 class="mb-3">Status</h6>
+            <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <select name="status" class="form-select mb-3">
+                    @foreach (var s in Enum.GetValues<OrderStatus>())
+                    {
+                        <option value="@s" selected="@(s == Model.Status)">@s</option>
+                    }
+                </select>
+                <button type="submit" class="btn btn-accent w-100">Update Status</button>
+            </form>
+        </div>
+    </div>
+</div>

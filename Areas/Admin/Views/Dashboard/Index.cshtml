@@ -1,0 +1,80 @@
+@using ApparelShop.Models
+@{ ViewData["Title"] = "Dashboard"; var recentOrders = ViewBag.RecentOrders as List<Order> ?? new(); }
+
+<h3 class="mb-4">Dashboard</h3>
+
+<div class="mb-3">
+    <a href="?range=" class="btn btn-sm @(ViewBag.SelectedRange == "all" ? "btn-accent" : "btn-outline-dark-custom")">All Time</a>
+    <a href="?range=today" class="btn btn-sm @(ViewBag.SelectedRange == "today" ? "btn-accent" : "btn-outline-dark-custom")">Today</a>
+    <a href="?range=week" class="btn btn-sm @(ViewBag.SelectedRange == "week" ? "btn-accent" : "btn-outline-dark-custom")">Last 7 Days</a>
+    <a href="?range=month" class="btn btn-sm @(ViewBag.SelectedRange == "month" ? "btn-accent" : "btn-outline-dark-custom")">Last 30 Days</a>
+    <a href="?range=quarter" class="btn btn-sm @(ViewBag.SelectedRange == "quarter" ? "btn-accent" : "btn-outline-dark-custom")">Last 3 Months</a>
+    <a href="?range=year" class="btn btn-sm @(ViewBag.SelectedRange == "year" ? "btn-accent" : "btn-outline-dark-custom")">Last Year</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value">@ViewBag.ProductCount</div>
+            <div class="stat-label">Products</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value">@ViewBag.CategoryCount</div>
+            <div class="stat-label">Categories</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value">@ViewBag.OrderCount</div>
+            <div class="stat-label">Total Orders</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value">AED @(((decimal)ViewBag.Revenue).ToString("0.00"))</div>
+            <div class="stat-label">Revenue</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="stat-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="stat-value">@ViewBag.PendingOrders</div>
+                <div class="stat-label">Pending Orders</div>
+            </div>
+            <a asp-controller="Orders" asp-action="Index" class="btn btn-sm btn-outline-dark-custom">Review</a>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="stat-value">@ViewBag.LowStock</div>
+                <div class="stat-label">Low Stock (&le;5)</div>
+            </div>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-sm btn-outline-dark-custom">View</a>
+        </div>
+    </div>
+</div>
+
+<div class="stat-card">
+    <h6 class="mb-3">Recent Orders</h6>
+    <table class="table table-sm">
+        <thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>
+            @foreach (var o in recentOrders)
+            {
+                <tr>
+                    <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id">@o.OrderNumber</a></td>
+                    <td>@o.CustomerName</td>
+                    <td>AED @o.Total.ToString("0.00")</td>
+                    <td><span class="badge bg-secondary">@o.Status</span></td>
+                    <td>@o.CreatedAt.ToString("dd MMM yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

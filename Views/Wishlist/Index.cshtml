@@ -1,0 +1,66 @@
+@model ApparelShop.Models.Wishlist
+@using ApparelShop.ViewComponents
+@{
+    ViewData["Title"] = "Wishlist";
+}
+
+<div class="container my-5">
+    @await Component.InvokeAsync("Breadcrumbs", new List<BreadcrumbItem>
+    {
+        new() { Text = "Home", Url = "/" },
+        new() { Text = "Wishlist" }
+    })
+
+    <div class="section-heading">
+        <div class="subtitle">Saved Items</div>
+        <h2>My Wishlist</h2>
+    </div>
+
+    @if (!Model.Items.Any())
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-heart" style="font-size:3rem;color:#ddd;"></i>
+            <p class="text-muted mt-3 mb-4">Your wishlist is empty.</p>
+            <a href="/shop" class="btn btn-accent">Browse Products</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var item in Model.Items)
+            {
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="product-card">
+                        <a href="/shop/product/@(item.Slug ?? "")">
+                            <div class="product-image-wrap">
+                                <img src="@(item.ImageUrl ?? "/images/hero.svg")" alt="@item.ProductName" loading="lazy" />
+                            </div>
+                            <div class="product-name">@item.ProductName</div>
+                        </a>
+                        <div class="product-price mb-3">
+                            @if (item.CompareAtPrice.HasValue && item.CompareAtPrice > item.Price)
+                            {
+                                <span class="original">AED @item.CompareAtPrice.Value.ToString("0.00")</span>
+                                <span class="sale">AED @item.Price.ToString("0.00")</span>
+                            }
+                            else
+                            {
+                                <span class="current">AED @item.Price.ToString("0.00")</span>
+                            }
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="/shop/product/@(item.Slug ?? "")" class="btn btn-accent btn-sm flex-grow-1 py-2">View Product</a>
+                            <form asp-controller="Wishlist" asp-action="Remove" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                <button type="submit" class="btn btn-outline-dark-custom btn-sm py-2 px-3" title="Remove" aria-label="Remove from wishlist">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

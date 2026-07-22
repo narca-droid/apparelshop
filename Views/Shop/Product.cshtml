@@ -1,0 +1,559 @@
+@model ApparelShop.Models.Product
+@using ApparelShop.Models
+@using ApparelShop.ViewComponents
+@{
+    ViewData["Title"] = Model.Name;
+    var related = ViewBag.Related as List<Product> ?? new();
+    var reviews = ViewBag.Reviews as List<ProductReview> ?? new();
+    var averageRating = (double)ViewBag.AverageRating;
+    var reviewCount = (int)ViewBag.ReviewCount;
+    var notifyCount = (int)ViewBag.NotifyCount;
+    var sizes = (Model.Sizes ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var colors = (Model.Colors ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var productUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/shop/product/{Model.Slug}";
+    var allImages = new List<string> { Model.MainImageUrl ?? "/images/hero.svg" };
+    allImages.AddRange(Model.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl));
+}
+
+<div class="container my-5">
+    @await Component.InvokeAsync("Breadcrumbs", new List<BreadcrumbItem>
+    {
+        new() { Text = "Home", Url = "/" },
+        new() { Text = "Shop", Url = "/shop" },
+        new() { Text = Model.Category?.Name ?? "Category", Url = $"/shop?category={Model.Category?.Slug}" },
+        new() { Text = Model.Name }
+    })
+
+    <div class="row g-5">
+        <div class="col-md-6">
+            <div class="product-image-wrap" id="mainImageWrap" style="aspect-ratio:3/4;border-radius:var(--radius-md);">
+                <img src="@(Model.MainImageUrl ?? "/images/hero.svg")" alt="@Model.Name" class="img-fluid" id="mainProductImage" />
+                @if (Model.OnSale)
+                {
+                    <span class="badge-sale">-@Model.DiscountPercent%</span>
+                }
+                @if (Model.IsNewArrival && !Model.OnSale)
+                {
+                    <span class="badge-new">New</span>
+                }
+            </div>
+            @if (allImages.Count > 1)
+            {
+                <div class="d-flex gap-2 mt-3 flex-wrap" id="imageGallery">
+                    @for (var i = 0; i < allImages.Count; i++)
+                    {
+                        <img src="@allImages[i]" alt="@Model.Name image @(i + 1)" class="gallery-thumb @(i == 0 ? "active" : "")"
+                             data-src="@allImages[i]" style="width:70px;height:90px;object-fit:cover;border-radius:var(--radius-sm);cursor:pointer;border:2px solid @(i == 0 ? "var(--color-accent)" : "transparent");transition:border-color 0.2s;" />
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="col-md-6">
+            <h1 class="display-font mb-2" style="font-size:2rem;letter-spacing:0.3px;">@Model.Name</h1>
+            <p class="text-muted mb-3" style="line-height:1.7;">@Model.ShortDescription</p>
+
+            @if (reviewCount > 0)
+            {
+                <div class="mb-3 d-flex align-items-center gap-2">
+                    <span class="text-warning">
+                        @for (var i = 1; i <= 5; i++)
+                        {
+                            <i class="bi @(i <= Math.Round(averageRating) ? "bi-star-fill" : "bi-star")"></i>
+                        }
+                    </span>
+                    <a href="#reviews" class="small text-muted text-decoration-none">@averageRating.ToString("0.0") (@reviewCount review@(reviewCount != 1 ? "s" : ""))</a>
+                </div>
+            }
+
+            <div class="pd-price mb-4">
+                @if (Model.OnSale)
+                {
+                    <span class="current" style="color:#c0392b;">AED @Model.Price.ToString("0.00")</span>
+                    <span class="original">AED @Model.CompareAtPrice!.Value.ToString("0.00")</span>
+                }
+                else
+                {
+                    <span class="current">AED @Model.Price.ToString("0.00")</span>
+                }
+            </div>
+
+            @if (Model.StockQuantity > 0 && Model.StockQuantity <= 5)
+            {
+                <div class="d-flex align-items-center gap-2 mb-3 p-2 px-3" style="background:#fef2f2;border-radius:var(--radius-sm);width:fit-content;">
+                    <i class="bi bi-exclamation-triangle-fill text-danger small"></i>
+                    <span class="small" style="color:#991b1b;">Only @Model.StockQuantity left in stock</span>
+                </div>
+            }
+
+            @if (Model.StockQuantity < 1)
+            {
+                <div class="mb-4 p-4" style="background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius-md);">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-bell-fill" style="color:#d97706;"></i>
+                        <strong style="color:#92400e;">Out of Stock</strong>
+                    </div>
+                    <p class="small text-muted mb-3">Get notified when this item is back in stock.</p>
+                    <form asp-controller="StockNotification" asp-action="Subscribe" method="post" class="d-flex gap-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@Model.Id" />
+                        <input type="email" name="email" class="form-control form-control-sm" placeholder="your@email.com" required style="max-width:260px;" />
+                        <button type="submit" class="btn btn-sm btn-outline-dark-custom">Notify Me</button>
+                    </form>
+                    @if (notifyCount > 0)
+                    {
+                        <p class="small text-muted mt-2 mb-0"><i class="bi bi-people"></i> @notifyCount people are waiting for this item.</p>
+                    }
+                </div>
+            }
+
+            <form id="addToCartForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="productId" value="@Model.Id" />
+
+                @if (sizes.Any())
+                {
+                    <div class="mb-4">
+                        <label class="form-label">Size</label><br />
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var s in sizes)
+                            {
+                                <span class="size-option" data-value="@s">@s</span>
+                            }
+                        </div>
+                        <input type="hidden" id="selectedSize" name="size" value="@sizes.FirstOrDefault()" />
+                    </div>
+                }
+
+                @if (colors.Any())
+                {
+                    <div class="mb-4">
+                        <label class="form-label">Color</label><br />
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var c in colors)
+                            {
+                                <span class="color-option" data-value="@c">@c</span>
+                            }
+                        </div>
+                        <input type="hidden" id="selectedColor" name="color" value="@colors.FirstOrDefault()" />
+                    </div>
+                }
+
+                <div class="mb-4">
+                    <label class="form-label">Quantity</label>
+                    <div class="qty-input">
+                        <button type="button" class="qty-minus">-</button>
+                        <input type="number" name="quantity" value="1" min="1" max="@Model.StockQuantity" />
+                        <button type="button" class="qty-plus">+</button>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3 mb-4">
+                    <button type="submit" class="btn btn-accent flex-grow-1 py-3 add-to-cart-btn" @(Model.StockQuantity < 1 ? "disabled" : "")>
+                        <span class="btn-text">
+                            <i class="bi bi-bag-plus me-1"></i>
+                            @(Model.StockQuantity < 1 ? "Out of Stock" : "Add to Bag")
+                        </span>
+                        <span class="btn-loading d-none"><i class="bi bi-arrow-repeat spin"></i> Adding...</span>
+                    </button>
+                    <form asp-controller="Wishlist" asp-action="Add" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@Model.Id" />
+                        <input type="hidden" name="productName" value="@Model.Name" />
+                        <input type="hidden" name="slug" value="@Model.Slug" />
+                        <input type="hidden" name="price" value="@Model.Price" />
+                        <input type="hidden" name="compareAtPrice" value="@(Model.CompareAtPrice?.ToString())" />
+                        <input type="hidden" name="imageUrl" value="@Model.MainImageUrl" />
+                        <button type="submit" class="btn btn-outline-dark-custom py-3 px-3" title="Add to Wishlist" aria-label="Add to Wishlist">
+                            <i class="bi bi-heart"></i>
+                        </button>
+                    </form>
+                </div>
+            </form>
+
+            <div class="py-3 mb-3" style="border-top:1px solid rgba(0,0,0,0.06);border-bottom:1px solid rgba(0,0,0,0.06);">
+                <div class="d-flex gap-4 small text-muted">
+                    <span><i class="bi bi-tag me-1"></i> @Model.Material</span>
+                    <span><i class="bi bi-upc-scan me-1"></i> @Model.Sku</span>
+                </div>
+            </div>
+
+            @if (sizes.Any())
+            {
+                <div class="mb-3">
+                    <button type="button" class="btn btn-ghost small" data-bs-toggle="modal" data-bs-target="#sizeGuideModal" style="color:var(--color-accent);">
+                        <i class="bi bi-rulers me-1"></i> Size Guide
+                    </button>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <div class="mb-4">
+                    <h6 class="text-uppercase small fw-bold mb-2" style="letter-spacing:0.08em;color:#888;">Description</h6>
+                    <p class="text-muted" style="line-height:1.8;">@Model.Description</p>
+                </div>
+            }
+
+            <div class="mt-4">
+                <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;color:#888;">Share</h6>
+                <div class="d-flex gap-2">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(productUrl)" target="_blank" rel="noopener" class="btn btn-outline-dark-custom btn-sm" title="Share on Facebook" aria-label="Share on Facebook">
+                        <i class="bi bi-facebook"></i>
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?url=@Uri.EscapeDataString(productUrl)&text=@Uri.EscapeDataString(Model.Name)" target="_blank" rel="noopener" class="btn btn-outline-dark-custom btn-sm" title="Share on X" aria-label="Share on X">
+                        <i class="bi bi-twitter-x"></i>
+                    </a>
+                    <a href="https://wa.me/?text=@Uri.EscapeDataString($"{Model.Name} - AED {Model.Price:0.00} {productUrl}")" target="_blank" rel="noopener" class="btn btn-outline-dark-custom btn-sm" title="Share on WhatsApp" aria-label="Share on WhatsApp">
+                        <i class="bi bi-whatsapp"></i>
+                    </a>
+                    <a href="https://pinterest.com/pin/create/button/?url=@Uri.EscapeDataString(productUrl)&description=@Uri.EscapeDataString(Model.Name)" target="_blank" rel="noopener" class="btn btn-outline-dark-custom btn-sm" title="Share on Pinterest" aria-label="Share on Pinterest">
+                        <i class="bi bi-pinterest"></i>
+                    </a>
+                    <button type="button" class="btn btn-outline-dark-custom btn-sm" title="Copy Link" aria-label="Copy Link" id="copyLinkBtn">
+                        <i class="bi bi-link-45deg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Size Guide Modal -->
+    @if (sizes.Any())
+    {
+        <div class="modal fade" id="sizeGuideModal" tabindex="-1" aria-labelledby="sizeGuideModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius:var(--radius-md);">
+                    <div class="modal-header" style="border-bottom:1px solid rgba(0,0,0,0.06);">
+                        <h6 class="modal-title fw-bold" id="sizeGuideModalLabel">Size Guide</h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="small text-muted mb-3">Measurements are in centimeters. Find your size by comparing your body measurements to the chart below.</p>
+                        <table class="table table-sm small">
+                            <thead>
+                                <tr style="background:var(--color-bg);">
+                                    <th>Size</th>
+                                    <th>Chest</th>
+                                    <th>Waist</th>
+                                    <th>Hips</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>XS</td><td>82-86</td><td>62-66</td><td>86-90</td></tr>
+                                <tr><td>S</td><td>86-90</td><td>66-70</td><td>90-94</td></tr>
+                                <tr><td>M</td><td>90-94</td><td>70-74</td><td>94-98</td></tr>
+                                <tr><td>L</td><td>94-98</td><td>74-78</td><td>98-102</td></tr>
+                                <tr><td>XL</td><td>98-102</td><td>78-82</td><td>102-106</td></tr>
+                            </tbody>
+                        </table>
+                        <p class="small text-muted">If you're between sizes, we recommend sizing up for a more relaxed fit.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Reviews Section -->
+    <section class="mt-5 pt-5" id="reviews">
+        <div class="section-heading">
+            <div class="subtitle">Customer Feedback</div>
+            <h2>Reviews</h2>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                @if (reviewCount > 0)
+                {
+                    <div class="d-flex align-items-center gap-4 mb-5 p-4" style="background:#f8f7f4;border-radius:var(--radius-md);">
+                        <div style="font-size:3rem;font-family:var(--font-serif);font-weight:700;line-height:1;">@averageRating.ToString("0.0")</div>
+                        <div>
+                            <div class="text-warning mb-1" style="font-size:1.1rem;">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi @(i <= Math.Round(averageRating) ? "bi-star-fill" : "bi-star")"></i>
+                                }
+                            </div>
+                            <span class="text-muted">Based on @reviewCount review@(reviewCount != 1 ? "s" : "")</span>
+                        </div>
+                    </div>
+                }
+
+                @foreach (var r in reviews)
+                {
+                    <div class="review-card">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <strong style="font-size:0.95rem;">@r.ReviewerName</strong>
+                            <span class="text-warning small">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi @(i <= r.Rating ? "bi-star-fill" : "bi-star")"></i>
+                                }
+                            </span>
+                        </div>
+                        <p class="small mb-1" style="color:#aaa;">@r.CreatedAt.ToString("dd MMM yyyy")</p>
+                        <h6 class="mb-1" style="font-size:0.95rem;">@r.Title</h6>
+                        @if (!string.IsNullOrEmpty(r.Body))
+                        {
+                            <p class="mb-0 text-muted" style="line-height:1.7;">@r.Body</p>
+                        }
+                    </div>
+                }
+
+                @if (!reviews.Any())
+                {
+                    <div class="text-center py-5">
+                        <i class="bi bi-chat-square-text" style="font-size:2.5rem;color:#ddd;"></i>
+                        <p class="text-muted mt-3">No reviews yet. Be the first to share your experience!</p>
+                    </div>
+                }
+
+                <div class="mt-5 p-4 p-md-5" style="background:#f8f7f4;border-radius:var(--radius-md);">
+                    <h6 class="text-uppercase small fw-bold mb-4" style="letter-spacing:0.08em;color:#555;">Write a Review</h6>
+                    <form asp-controller="Reviews" asp-action="Add" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@Model.Id" />
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Name *</label>
+                                <input type="text" name="reviewerName" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email *</label>
+                                <input type="email" name="reviewerEmail" class="form-control" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Rating *</label>
+                                <div class="rating-stars d-flex gap-1" id="ratingStars">
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        <i class="bi bi-star rating-star" data-value="@i" style="font-size:1.5rem;cursor:pointer;color:#ddd;transition:color 0.15s;"></i>
+                                    }
+                                </div>
+                                <input type="hidden" name="rating" id="ratingValue" value="0" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Review Title *</label>
+                                <input type="text" name="title" class="form-control" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Your Review</label>
+                                <textarea name="body" class="form-control" rows="4"></textarea>
+                            </div>
+                            <div class="col-12 d-flex align-items-center gap-3">
+                                <button type="submit" class="btn btn-accent">Submit Review</button>
+                                <span class="small text-muted">Reviews are approved before appearing publicly.</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @if (related.Any())
+    {
+        <section class="mt-5 pt-5">
+            <div class="section-heading">
+                <div class="subtitle">You May Also Like</div>
+                <h2>Related Products</h2>
+            </div>
+            <div class="row g-4">
+                @foreach (var p in related)
+                {
+                    <div class="col-6 col-md-3">
+                        @await Html.PartialAsync("_ProductCard", p)
+                    </div>
+                }
+            </div>
+        </section>
+    }
+</div>
+
+<style>
+    .spin { animation: spin 1s linear infinite; }
+    @@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .rating-star.active { color: #ffc107 !important; }
+    .gallery-thumb.active { border-color: var(--color-accent) !important; }
+</style>
+
+@section Scripts {
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@@type": "Product",
+    "name": "@Model.Name",
+    "description": "@(Model.ShortDescription ?? Model.Description ?? "")",
+    "image": "@(Model.MainImageUrl ?? "")",
+    "sku": "@Model.Sku",
+    "brand": { "@@type": "Brand", "name": "JK Apparel" },
+    "offers": {
+        "@@type": "Offer",
+        "priceCurrency": "AED",
+        "price": "@Model.Price",
+        "availability": "@(Model.StockQuantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock")",
+        "url": "@productUrl"
+    }
+    @if (reviewCount > 0)
+    {
+        <text>,
+        "aggregateRating": {
+            "@@type": "AggregateRating",
+            "ratingValue": "@averageRating",
+            "reviewCount": "@reviewCount"
+        }
+        </text>
+    }
+}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Pre-select first size and color
+    var firstSize = document.querySelector('.size-option');
+    if (firstSize) firstSize.classList.add('active');
+    var firstColor = document.querySelector('.color-option');
+    if (firstColor) firstColor.classList.add('active');
+
+    var stars = document.querySelectorAll('.rating-star');
+    var input = document.getElementById('ratingValue');
+    if (!stars.length || !input) return;
+
+    stars.forEach(function(s) {
+        s.addEventListener('click', function() {
+            var val = parseInt(s.dataset.value);
+            input.value = val;
+            stars.forEach(function(st) {
+                var active = parseInt(st.dataset.value) <= val;
+                st.classList.toggle('active', active);
+                st.classList.toggle('bi-star-fill', active);
+                st.classList.toggle('bi-star', !active);
+            });
+        });
+        s.addEventListener('mouseenter', function() {
+            var val = parseInt(s.dataset.value);
+            stars.forEach(function(st) {
+                st.style.color = parseInt(st.dataset.value) <= val ? '#ffc107' : '#ddd';
+            });
+        });
+        s.addEventListener('mouseleave', function() {
+            var val = parseInt(input.value);
+            stars.forEach(function(st) {
+                var active = parseInt(st.dataset.value) <= val;
+                st.style.color = active ? '#ffc107' : '#ddd';
+            });
+        });
+    });
+
+    // Copy link button
+    var copyBtn = document.getElementById('copyLinkBtn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', function() {
+            navigator.clipboard.writeText('@productUrl').then(function() {
+                copyBtn.innerHTML = '<i class="bi bi-check"></i> Copied';
+                setTimeout(function() { copyBtn.innerHTML = '<i class="bi bi-link-45deg"></i>'; }, 2000);
+            });
+        });
+    }
+
+    // Image gallery
+    var mainImage = document.getElementById('mainProductImage');
+    document.querySelectorAll('.gallery-thumb').forEach(function(thumb) {
+        thumb.addEventListener('click', function() {
+            mainImage.src = thumb.dataset.src;
+            document.querySelectorAll('.gallery-thumb').forEach(function(t) {
+                t.style.borderColor = 'transparent';
+                t.classList.remove('active');
+            });
+            thumb.style.borderColor = 'var(--color-accent)';
+            thumb.classList.add('active');
+        });
+    });
+
+    // AJAX add to cart
+    var form = document.getElementById('addToCartForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var btn = form.querySelector('.add-to-cart-btn');
+            var text = btn.querySelector('.btn-text');
+            var loading = btn.querySelector('.btn-loading');
+            btn.disabled = true;
+            if (text) text.classList.add('d-none');
+            if (loading) loading.classList.remove('d-none');
+
+            var antiForgeryToken = form.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            var formData = new FormData(form);
+
+            fetch('/Cart/Add', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'RequestVerificationToken': antiForgeryToken
+                },
+                body: formData
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                btn.disabled = false;
+                if (text) text.classList.remove('d-none');
+                if (loading) loading.classList.add('d-none');
+
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    refreshCartBadge();
+                    showMiniCartFlyout(data);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            })
+            .catch(function() {
+                btn.disabled = false;
+                if (text) text.classList.remove('d-none');
+                if (loading) loading.classList.add('d-none');
+                form.submit();
+            });
+        });
+    }
+
+    function showMiniCartFlyout(data) {
+        var existing = document.getElementById('mini-cart-flyout');
+        if (existing) existing.remove();
+
+        var itemsHtml = '';
+        if (data.items) {
+            data.items.forEach(function(item) {
+                itemsHtml += '<div class="d-flex gap-3 mb-3 pb-3" style="border-bottom:1px solid rgba(0,0,0,0.06);">' +
+                    '<img src="' + (item.imageUrl || '/images/hero.svg') + '" style="width:50px;height:60px;object-fit:cover;border-radius:var(--radius-sm);" />' +
+                    '<div class="flex-grow-1">' +
+                    '<div class="small fw-medium">' + item.productName + '</div>' +
+                    '<div class="small text-muted">Qty: ' + item.quantity + '</div>' +
+                    '<div class="small fw-semibold">AED ' + item.lineTotal.toFixed(2) + '</div>' +
+                    '</div></div>';
+            });
+        }
+
+        var flyout = document.createElement('div');
+        flyout.id = 'mini-cart-flyout';
+        flyout.style.cssText = 'position:fixed;top:0;right:0;width:360px;max-width:90vw;height:100vh;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,0.12);z-index:10000;display:flex;flex-direction:column;animation:slideInRight 0.3s ease;';
+        flyout.innerHTML =
+            '<div class="d-flex justify-content-between align-items-center p-4" style="border-bottom:1px solid rgba(0,0,0,0.06);">' +
+            '<h6 class="mb-0 fw-bold">Added to Bag</h6>' +
+            '<button class="btn-close" onclick="document.getElementById(\'mini-cart-flyout\').remove()"></button>' +
+            '</div>' +
+            '<div class="p-4 flex-grow-1" style="overflow-y:auto;">' + itemsHtml + '</div>' +
+            '<div class="p-4" style="border-top:1px solid rgba(0,0,0,0.06);">' +
+            '<div class="d-flex justify-content-between mb-3"><span class="text-muted">Subtotal</span><span class="fw-bold">AED ' + data.subtotal.toFixed(2) + '</span></div>' +
+            '<a href="/Cart" class="btn btn-accent w-100 py-2 mb-2">View Bag (' + data.cartCount + ')</a>' +
+            '<a href="/Checkout" class="btn btn-outline-dark-custom w-100 py-2">Checkout</a>' +
+            '</div>';
+
+        document.body.appendChild(flyout);
+
+        var overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;';
+        overlay.onclick = function() { flyout.remove(); overlay.remove(); };
+        document.body.appendChild(overlay);
+    }
+});
+</script>
+}

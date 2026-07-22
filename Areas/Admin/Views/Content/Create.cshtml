@@ -1,0 +1,28 @@
+@model ApparelShop.Models.ContentBlock
+@{ ViewData["Title"] = "Add Content Page"; }
+<h3 class="mb-4">Add Content Page</h3>
+
+<form asp-action="Create" method="post" style="max-width:700px;">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    <div class="stat-card mb-3">
+        <div class="mb-3">
+            <label class="form-label">Page Title</label>
+            <input asp-for="Title" class="form-control" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">URL Key (leave blank to auto-generate from title)</label>
+            <input asp-for="Key" class="form-control" placeholder="e.g. return-policy" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Content (HTML allowed)</label>
+            <textarea asp-for="BodyHtml" class="form-control" rows="10"></textarea>
+        </div>
+        <div class="form-check">
+            <input asp-for="IsActive" class="form-check-input" type="checkbox" checked="@Model.IsActive" />
+            <label class="form-check-label">Active</label>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-accent px-4">Create Page</button>
+    <a asp-action="Index" class="btn btn-outline-dark-custom px-4">Cancel</a>
+</form>

@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = "Check Your Email";
+}
+
+<div class="container my-5 py-5" style="max-width: 600px;">
+    <div class="text-center">
+        <i class="fas fa-envelope-open-text fa-3x text-accent mb-3"></i>
+        <h1 class="h3 mb-3">Check Your Email</h1>
+
+        @if (ViewBag.Message != null)
+        {
+            <p class="text-muted mb-4">@ViewBag.Message</p>
+        }
+
+        @if (ViewBag.ConfirmLink != null)
+        {
+            <div class="alert alert-info text-start">
+                <p class="mb-2 fw-semibold">Demo Mode — Confirmation Link:</p>
+                <a href="@ViewBag.ConfirmLink" class="word-break small">@ViewBag.ConfirmLink</a>
+            </div>
+        }
+
+        <a asp-action="Login" class="btn btn-dark px-4">Sign In</a>
+    </div>
+</div>

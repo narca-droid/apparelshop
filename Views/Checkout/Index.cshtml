@@ -1,0 +1,245 @@
+@model ApparelShop.Models.Cart
+@using ApparelShop.Models
+@using ApparelShop.ViewComponents
+@{
+    ViewData["Title"] = "Checkout";
+    var coupon = ViewBag.AppliedCoupon as Coupon;
+    var discount = 0m;
+    if (coupon != null && coupon.IsUsable)
+    {
+        discount = coupon.Type == CouponType.Percentage
+            ? Math.Round(Model.Subtotal * coupon.Value / 100, 2)
+            : coupon.Value;
+        if (coupon.MaxDiscountAmount.HasValue && discount > coupon.MaxDiscountAmount.Value)
+            discount = coupon.MaxDiscountAmount.Value;
+        if (discount > Model.Subtotal) discount = Model.Subtotal;
+    }
+    var finalTotal = Model.Subtotal + 25 - discount;
+}
+
+<div class="container my-5">
+    @await Component.InvokeAsync("Breadcrumbs", new List<BreadcrumbItem>
+    {
+        new() { Text = "Home", Url = "/" },
+        new() { Text = "Shopping Bag", Url = "/Cart" },
+        new() { Text = "Checkout" }
+    })
+
+    <div class="section-heading">
+        <div class="subtitle">Almost there</div>
+        <h2>Checkout</h2>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7">
+            <form action="/Checkout/PlaceOrder" method="post" class="checkout-form" id="placeOrderForm">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-4">
+                    <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;color:#555;">
+                        <i class="bi bi-person me-1"></i> Contact Information
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name *</label>
+                            <input type="text" name="customerName" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone *</label>
+                            <input type="text" name="customerPhone" class="form-control" placeholder="+971..." required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Email *</label>
+                            <input type="email" name="customerEmail" class="form-control" required />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;color:#555;">
+                        <i class="bi bi-geo-alt me-1"></i> Shipping Address
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Address *</label>
+                            <input type="text" name="shippingAddress" class="form-control" placeholder="Street, building, apartment" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">City *</label>
+                            <input type="text" name="city" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Emirate *</label>
+                            <select name="emirate" class="form-select" required>
+                                <option value="">Select Emirate</option>
+                                <option>Abu Dhabi</option>
+                                <option>Dubai</option>
+                                <option selected>Sharjah</option>
+                                <option>Ajman</option>
+                                <option>Umm Al Quwain</option>
+                                <option>Ras Al Khaimah</option>
+                                <option>Fujairah</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;color:#555;">
+                        <i class="bi bi-tag me-1"></i> Coupon Code <span class="text-muted fw-normal" style="font-size:0.7rem;text-transform:none;letter-spacing:0;">(optional)</span>
+                    </h6>
+                    <div id="couponSection">
+                        @if (coupon != null)
+                        {
+                            <div class="d-flex align-items-center justify-content-between p-3" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius-sm);" id="couponApplied">
+                                <div>
+                                    <span class="fw-semibold small" style="color:#166534;">@coupon.Code</span>
+                                    <span class="small text-muted ms-2">
+                                        @(coupon.Type == CouponType.Percentage ? $"{coupon.Value}% off" : $"AED {coupon.Value:0.00} off")
+                                    </span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-ghost text-danger" id="removeCouponBtn"><i class="bi bi-x"></i></button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex gap-2" id="couponForm">
+                                <input type="text" id="couponCodeInput" class="form-control form-control-sm" placeholder="Enter coupon code" style="max-width:250px;" />
+                                <button type="button" class="btn btn-sm btn-outline-dark-custom" id="applyCouponBtn">Apply</button>
+                            </div>
+                        }
+                        <div id="couponMsg" class="small mt-2" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;color:#555;">
+                        <i class="bi bi-chat-dots me-1"></i> Order Notes
+                    </h6>
+                    <textarea name="notes" class="form-control" rows="2" placeholder="Any special instructions for your order (optional)"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-accent w-100 py-3" style="font-size:0.85rem;">
+                    <i class="bi bi-lock me-1"></i> Place Order — AED <span id="checkoutTotal">@finalTotal.ToString("0.00")</span>
+                </button>
+                <p class="small text-muted mt-3 text-center">
+                    <i class="bi bi-shield-check me-1"></i> Cash on delivery. Payment details will be shared via email confirmation.
+                </p>
+            </form>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="cart-summary">
+                <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;">Order Summary</h6>
+                @foreach (var item in Model.Items)
+                {
+                    <div class="d-flex justify-content-between mb-2 small py-2" style="border-bottom:1px solid rgba(0,0,0,0.06);">
+                        <span class="text-muted">
+                            @item.ProductName
+                            @if (item.Size is not null) { <span> (@item.Size)</span> }
+                            <span class="ms-1">x@(item.Quantity)</span>
+                        </span>
+                        <span class="fw-semibold">AED @item.LineTotal.ToString("0.00")</span>
+                    </div>
+                }
+                <div class="d-flex justify-content-between mb-2 mt-3">
+                    <span class="text-muted">Subtotal</span>
+                    <span>AED @Model.Subtotal.ToString("0.00")</span>
+                </div>
+                <div id="discountRow" class="d-flex justify-content-between mb-2" style="color:#16a34a;@(discount > 0 ? "" : "display:none;")">
+                    <span>Discount</span>
+                    <span id="discountAmount">-AED @discount.ToString("0.00")</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Shipping</span>
+                    <span>AED 25.00</span>
+                </div>
+                <div class="d-flex justify-content-between" style="padding-top:1rem;border-top:2px solid var(--color-primary);">
+                    <span class="fw-bold" style="font-size:1.1rem;">Total</span>
+                    <span class="fw-bold" style="font-size:1.1rem;">AED <span id="summaryTotal">@finalTotal.ToString("0.00")</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var antiForgeryToken = document.querySelector('#placeOrderForm input[name="__RequestVerificationToken"]')?.value || '';
+    var subtotal = @Model.Subtotal;
+    var shipping = 25;
+
+    var applyBtn = document.getElementById('applyCouponBtn');
+    var removeBtn = document.getElementById('removeCouponBtn');
+    var couponInput = document.getElementById('couponCodeInput');
+    var couponMsg = document.getElementById('couponMsg');
+
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function() {
+            var code = couponInput ? couponInput.value.trim() : '';
+            if (!code) { showCouponMsg('Please enter a coupon code.', false); return; }
+
+            applyBtn.disabled = true;
+            applyBtn.textContent = 'Applying...';
+
+            fetch('/Checkout/ApplyCoupon', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'RequestVerificationToken': antiForgeryToken
+                },
+                body: 'couponCode=' + encodeURIComponent(code)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                applyBtn.disabled = false;
+                applyBtn.textContent = 'Apply';
+                if (data.success) {
+                    location.reload();
+                } else {
+                    showCouponMsg(data.message, false);
+                }
+            })
+            .catch(function() {
+                applyBtn.disabled = false;
+                applyBtn.textContent = 'Apply';
+                showCouponMsg('Something went wrong. Please try again.', false);
+            });
+        });
+    }
+
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            removeBtn.disabled = true;
+
+            fetch('/Checkout/RemoveCoupon', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'RequestVerificationToken': antiForgeryToken
+                }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    location.reload();
+                }
+            })
+            .catch(function() {
+                removeBtn.disabled = false;
+            });
+        });
+    }
+
+    function showCouponMsg(msg, success) {
+        if (!couponMsg) return;
+        couponMsg.textContent = msg;
+        couponMsg.style.display = 'block';
+        couponMsg.style.color = success ? '#166534' : '#dc3545';
+    }
+});
+</script>
+}

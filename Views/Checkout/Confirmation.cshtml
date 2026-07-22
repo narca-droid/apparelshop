@@ -1,0 +1,66 @@
+@model ApparelShop.Models.Order
+@using ApparelShop.ViewComponents
+@{ ViewData["Title"] = "Order Confirmed"; }
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 text-center">
+            <div style="width:80px;height:80px;border-radius:50%;background:#f0fdf4;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1.5rem;">
+                <i class="bi bi-check-lg" style="font-size:2.5rem;color:#22c55e;"></i>
+            </div>
+            <h2 class="display-font mb-2">Thank you, @Model.CustomerName!</h2>
+            <p class="text-muted mb-4" style="max-width:480px;margin:0 auto;">Your order <strong>@Model.OrderNumber</strong> has been placed successfully.</p>
+
+            <div class="alert alert-info text-start mx-auto" style="max-width:520px;border-radius:var(--radius-md);">
+                <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-telephone-fill mt-1" style="color:#3b82f6;"></i>
+                    <div>
+                        <h6 class="mb-1">What happens next?</h6>
+                        <p class="small mb-1">Our team will call you shortly at <strong>@Model.CustomerPhone</strong> to confirm your order details and delivery time.</p>
+                        <p class="small mb-0 text-muted">Your order will be processed only after phone confirmation.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-start p-4 mt-4" style="background:#f8f7f4;border-radius:var(--radius-md);">
+                <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;">Order Details</h6>
+                @foreach (var item in Model.Items)
+                {
+                    <div class="d-flex justify-content-between mb-2 small py-1" style="border-bottom:1px solid rgba(0,0,0,0.06);">
+                        <span class="text-muted">
+                            @item.ProductName
+                            @if (item.Size is not null) { <span> (@item.Size)</span> }
+                            <span class="ms-1">x@(item.Quantity)</span>
+                        </span>
+                        <span class="fw-semibold">AED @item.LineTotal.ToString("0.00")</span>
+                    </div>
+                }
+                <div class="d-flex justify-content-between mb-1 mt-2">
+                    <span class="small text-muted">Subtotal</span>
+                    <span class="small">AED @Model.Subtotal.ToString("0.00")</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2 small text-muted">
+                    <span>Shipping</span>
+                    <span>AED @Model.ShippingFee.ToString("0.00")</span>
+                </div>
+                <div class="d-flex justify-content-between" style="padding-top:0.75rem;border-top:1px solid rgba(0,0,0,0.08);">
+                    <span class="fw-bold">Total</span>
+                    <span class="fw-bold">AED @Model.Total.ToString("0.00")</span>
+                </div>
+            </div>
+
+            <div class="text-start p-4 mt-3" style="background:#f8f7f4;border-radius:var(--radius-md);">
+                <h6 class="text-uppercase small fw-bold mb-2" style="letter-spacing:0.08em;">Shipping To</h6>
+                <p class="small text-muted mb-0" style="line-height:1.7;">
+                    @Model.ShippingAddress<br />
+                    @Model.City, @Model.Emirate
+                </p>
+            </div>
+
+            <div class="mt-4 d-flex gap-3 justify-content-center">
+                <a href="/shop" class="btn btn-accent">Continue Shopping</a>
+                <a href="/Checkout/Tracking" class="btn btn-outline-dark-custom">Track Order</a>
+            </div>
+        </div>
+    </div>
+</div>

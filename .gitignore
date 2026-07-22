@@ -1,0 +1,17 @@
+bin/
+obj/
+*.db
+*.db-shm
+*.db-wal
+.vs/
+wwwroot/uploads/
+appsettings.Development.json
+
+# SSL certificates
+https/
+
+# Docker data
+data/
+
+# Environment files
+.env

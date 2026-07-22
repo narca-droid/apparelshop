@@ -1,0 +1,130 @@
+@model ApparelShop.Models.Order
+@using ApparelShop.ViewComponents
+@{
+    ViewData["Title"] = "Order Tracking";
+}
+
+<div class="container my-5">
+    @await Component.InvokeAsync("Breadcrumbs", new List<BreadcrumbItem>
+    {
+        new() { Text = "Home", Url = "/" },
+        new() { Text = "Track Order", Url = "/Checkout/Tracking" },
+        new() { Text = Model.OrderNumber }
+    })
+
+    <div class="section-heading">
+        <div class="subtitle">Order Status</div>
+        <h2>Track Your Order</h2>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="p-4 p-md-5" style="background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:var(--radius-md);">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h5 class="mb-1" style="font-size:1.1rem;">@Model.OrderNumber</h5>
+                        <p class="text-muted small mb-0">Placed on @Model.CreatedAt.ToString("dd MMM yyyy 'at' h:mm tt")</p>
+                    </div>
+                    <span class="badge @(Model.Status == ApparelShop.Models.OrderStatus.Delivered ? "bg-success" : Model.Status == ApparelShop.Models.OrderStatus.Cancelled ? "bg-danger" : "bg-warning text-dark")">
+                        @Model.Status
+                    </span>
+                </div>
+
+                <div class="d-flex gap-4 mb-4 py-3" style="border-top:1px solid rgba(0,0,0,0.06);border-bottom:1px solid rgba(0,0,0,0.06);">
+                    <div>
+                        <div class="small text-muted mb-1">Total</div>
+                        <div class="fw-semibold">AED @Model.Total.ToString("0.00")</div>
+                    </div>
+                    <div>
+                        <div class="small text-muted mb-1">Payment</div>
+                        <div class="fw-semibold">Cash on Delivery</div>
+                    </div>
+                </div>
+
+                @if (Model.Status == ApparelShop.Models.OrderStatus.Confirmed && !string.IsNullOrEmpty(Model.ConfirmationNotes))
+                {
+                    <div class="alert alert-info small mb-4" style="border-radius:var(--radius-md);">
+                        <i class="bi bi-info-circle me-1"></i> <strong>Note from store:</strong> @Model.ConfirmationNotes
+                    </div>
+                }
+
+                <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;color:#555;">Order Timeline</h6>
+
+                @{
+                    var statuses = new[]
+                    {
+                        (Value: ApparelShop.Models.OrderStatus.Pending, Label: "Order Placed", Icon: "bi-bag-check", Description: "We've received your order."),
+                        (Value: ApparelShop.Models.OrderStatus.Confirmed, Label: "Order Confirmed", Icon: "bi-telephone", Description: "We've confirmed your order via phone call."),
+                        (Value: ApparelShop.Models.OrderStatus.Processing, Label: "Processing", Icon: "bi-gear", Description: "Your order is being prepared."),
+                        (Value: ApparelShop.Models.OrderStatus.Shipped, Label: "Shipped", Icon: "bi-truck", Description: "Your order is on its way."),
+                        (Value: ApparelShop.Models.OrderStatus.Delivered, Label: "Delivered", Icon: "bi-check-circle", Description: "Your order has been delivered."),
+                    };
+                    var currentIdx = Array.FindIndex(statuses, s => s.Value == Model.Status);
+                    if (Model.Status == ApparelShop.Models.OrderStatus.Cancelled) currentIdx = -1;
+                }
+
+                <div class="timeline">
+                    @for (var i = 0; i < statuses.Length; i++)
+                    {
+                        var s = statuses[i];
+                        bool isCompleted = currentIdx >= 0 && i <= currentIdx;
+                        bool isCurrent = currentIdx >= 0 && i == currentIdx;
+
+                        <div class="timeline-item @(isCompleted ? "completed" : "") @(isCurrent ? "current" : "")">
+                            <div class="timeline-icon">
+                                <i class="bi @(isCompleted ? s.Icon : "bi-circle")"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <strong>@s.Label</strong>
+                                @if (isCurrent || isCompleted)
+                                {
+                                    <p class="small text-muted mb-0 mt-1">@s.Description</p>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.Status == ApparelShop.Models.OrderStatus.Cancelled)
+                    {
+                        <div class="timeline-item cancelled">
+                            <div class="timeline-icon">
+                                <i class="bi bi-x-circle"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <strong class="text-danger">Cancelled</strong>
+                                <p class="small text-muted mb-0 mt-1">This order has been cancelled.</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <hr style="border-color:rgba(0,0,0,0.06);" />
+                <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;color:#555;">Items</h6>
+                @foreach (var item in Model.Items)
+                {
+                    <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom:1px solid rgba(0,0,0,0.06);">
+                        <div>
+                            <span class="fw-semibold" style="font-size:0.92rem;">@item.ProductName</span>
+                            @if (!string.IsNullOrEmpty(item.Size) || !string.IsNullOrEmpty(item.Color))
+                            {
+                                <span class="text-muted small">
+                                    (@string.Join(", ", new[] { item.Size, item.Color }.Where(x => !string.IsNullOrEmpty(x))))
+                                </span>
+                            }
+                            <span class="text-muted small"> x@(item.Quantity)</span>
+                        </div>
+                        <span class="fw-semibold">AED @item.LineTotal.ToString("0.00")</span>
+                    </div>
+                }
+
+                <hr style="border-color:rgba(0,0,0,0.06);" />
+                <h6 class="text-uppercase small fw-bold mb-2" style="letter-spacing:0.08em;color:#555;">Shipping To</h6>
+                <p class="small text-muted mb-0" style="line-height:1.7;">@Model.CustomerName<br />@Model.ShippingAddress<br />@Model.City, @Model.Emirate<br />@Model.CustomerPhone</p>
+
+                <div class="text-center mt-4">
+                    <a href="/shop" class="btn btn-accent">Continue Shopping</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

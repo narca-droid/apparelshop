@@ -1,0 +1,11 @@
+@model ApparelShop.Models.ContentBlock
+@using ApparelShop.Services
+@{
+    ViewData["Title"] = Model.Title;
+}
+<div class="container my-5 py-4" style="max-width: 800px;">
+    <h1 class="mb-4">@Model.Title</h1>
+    <div class="content-body">
+        @Html.Raw(HtmlSanitizer.Sanitize(Model.BodyHtml))
+    </div>
+</div>

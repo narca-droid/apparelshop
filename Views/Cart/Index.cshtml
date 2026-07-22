@@ -1,0 +1,164 @@
+@model ApparelShop.Models.Cart
+@using ApparelShop.ViewComponents
+@{ ViewData["Title"] = "Your Bag"; }
+
+<div class="container my-5">
+    @await Component.InvokeAsync("Breadcrumbs", new List<BreadcrumbItem>
+    {
+        new() { Text = "Home", Url = "/" },
+        new() { Text = "Shopping Bag" }
+    })
+
+    <div class="section-heading">
+        <div class="subtitle">Review</div>
+        <h2>Your Bag</h2>
+    </div>
+
+    @if (!Model.Items.Any())
+    {
+        <div class="text-center py-5">
+            <div class="empty-state-icon mb-3">
+                <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="60" cy="60" r="58" stroke="#e5e5e5" stroke-width="2" stroke-dasharray="6 4"/>
+                    <path d="M40 45L35 30H25" stroke="#ccc" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M40 45H95L88 75H47L40 45Z" stroke="#c9a227" stroke-width="2" fill="#c9a227" fill-opacity="0.05"/>
+                    <circle cx="50" cy="85" r="4" fill="#c9a227" fill-opacity="0.3"/>
+                    <circle cx="85" cy="85" r="4" fill="#c9a227" fill-opacity="0.3"/>
+                </svg>
+            </div>
+            <h5 class="mb-2" style="font-family:var(--font-serif);">Your bag is empty</h5>
+            <p class="text-muted mb-4">Looks like you haven't added anything yet. Explore our collection and find something you love.</p>
+            <a href="/shop" class="btn btn-accent">
+                <i class="bi bi-bag-plus me-1"></i> Start Shopping
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-lg-8">
+                <div id="cart-items">
+                    @foreach (var item in Model.Items)
+                    {
+                        <div class="cart-item" data-product-id="@item.ProductId" data-size="@item.Size" data-color="@item.Color">
+                            <img src="@(item.ImageUrl ?? "/images/hero.svg")" class="cart-item-img" alt="@item.ProductName" />
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1" style="font-size:0.95rem;font-weight:500;">@item.ProductName</h6>
+                                        <div class="small text-muted">
+                                            @if (item.Size is not null) { <span>Size: @item.Size</span> }
+                                            @if (item.Color is not null) { <span class="ms-2">Color: @item.Color</span> }
+                                        </div>
+                                    </div>
+                                    <span class="fw-semibold item-total">AED @item.LineTotal.ToString("0.00")</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <div class="qty-input">
+                                        <button type="button" class="qty-minus" data-ajax="true">-</button>
+                                        <input type="number" name="quantity" value="@item.Quantity" min="1" readonly />
+                                        <button type="button" class="qty-plus" data-ajax="true">+</button>
+                                    </div>
+                                    <button type="button" class="btn btn-ghost text-muted small remove-item-btn"
+                                            data-product-id="@item.ProductId" data-size="@item.Size" data-color="@item.Color">
+                                        <i class="bi bi-trash me-1"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="cart-summary">
+                    <h6 class="text-uppercase small fw-bold mb-3" style="letter-spacing:0.08em;">Order Summary</h6>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Subtotal</span>
+                        <span class="fw-semibold" id="cart-subtotal">AED @Model.Subtotal.ToString("0.00")</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3 text-muted small">
+                        <span>Shipping</span>
+                        <span>Calculated at checkout</span>
+                    </div>
+                    <a href="/Checkout" class="btn btn-accent w-100 py-3">
+                        Proceed to Checkout
+                        <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                    <a href="/shop" class="btn btn-ghost w-100 mt-2 small text-muted">Continue Shopping</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+    document.querySelectorAll('#cart-items .qty-minus, #cart-items .qty-plus').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var wrap = btn.closest('.qty-input');
+            var input = wrap.querySelector('input');
+            var val = parseInt(input.value) || 1;
+            var cartItem = btn.closest('.cart-item');
+            var productId = cartItem.dataset.productId;
+            var size = cartItem.dataset.size;
+            var color = cartItem.dataset.color;
+
+            if (btn.classList.contains('qty-minus')) val = Math.max(1, val - 1);
+            else val = val + 1;
+
+            input.value = val;
+
+            fetch('/Cart/UpdateQuantity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'RequestVerificationToken': antiForgeryToken
+                },
+                body: 'productId=' + productId + '&size=' + encodeURIComponent(size || '') + '&color=' + encodeURIComponent(color || '') + '&quantity=' + val
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    document.getElementById('cart-subtotal').textContent = 'AED ' + data.subtotal.toFixed(2);
+                    var itemEl = cartItem.querySelector('.item-total');
+                    var item = data.items.find(function(i) { return i.productId == productId && i.size == (size || null) && i.color == (color || null); });
+                    if (item && itemEl) itemEl.textContent = 'AED ' + item.lineTotal.toFixed(2);
+                    refreshCartBadge();
+                }
+            });
+        });
+    });
+
+    document.querySelectorAll('.remove-item-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var productId = btn.dataset.productId;
+            var size = btn.dataset.size;
+            var color = btn.dataset.color;
+
+            fetch('/Cart/Remove', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'RequestVerificationToken': antiForgeryToken
+                },
+                body: 'productId=' + productId + '&size=' + encodeURIComponent(size || '') + '&color=' + encodeURIComponent(color || '')
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    btn.closest('.cart-item').remove();
+                    document.getElementById('cart-subtotal').textContent = 'AED ' + data.subtotal.toFixed(2);
+                    refreshCartBadge();
+                    if (data.items.length === 0) location.reload();
+                }
+            });
+        });
+    });
+});
+</script>
+}

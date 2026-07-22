@@ -1,0 +1,67 @@
+@model ApparelShop.Models.SiteSetting
+<footer class="site-footer">
+    <div class="container">
+        <div class="row gy-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="footer-brand">@Model.SiteName</div>
+                <p class="footer-text">@Model.FooterAboutText</p>
+                <div class="social-links mt-3">
+                    @if (!string.IsNullOrEmpty(Model.InstagramUrl))
+                    {
+                        <a href="@Model.InstagramUrl" target="_blank" rel="noopener" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.FacebookUrl))
+                    {
+                        <a href="@Model.FacebookUrl" target="_blank" rel="noopener" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.TiktokUrl))
+                    {
+                        <a href="@Model.TiktokUrl" target="_blank" rel="noopener" aria-label="TikTok"><i class="bi bi-tiktok"></i></a>
+                    }
+                </div>
+                <div class="mt-4">
+                    <h6>Stay in the Loop</h6>
+                    <p class="small" style="color:rgba(255,255,255,0.4);">Subscribe for new arrivals, exclusives, and more.</p>
+                    <form asp-controller="Newsletter" asp-action="Subscribe" method="post" class="d-flex gap-2" id="newsletterForm">
+                        @Html.AntiForgeryToken()
+                        <input type="email" name="email" class="form-control form-control-sm" placeholder="Your email" required style="max-width:220px;background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);color:#fff;" />
+                        <button type="submit" class="btn btn-sm" style="background:var(--color-accent);color:#fff;border:none;padding:0.4rem 1rem;">Subscribe</button>
+                    </form>
+                    <div id="newsletterMsg" class="small mt-2" style="display:none;color:var(--color-accent);"></div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <h6>Shop</h6>
+                <ul class="footer-links">
+                    <li><a href="/shop">All Products</a></li>
+                    <li><a href="/shop?filter=new">New Arrivals</a></li>
+                    <li><a href="/shop?filter=featured">Featured</a></li>
+                    <li><a href="/shop?filter=sale">On Sale</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <h6>Help</h6>
+                <ul class="footer-links">
+                    <li><a href="/page/about-page">About Us</a></li>
+                    <li><a href="/page/shipping-policy">Shipping &amp; Returns</a></li>
+                    <li><a href="/Checkout/Tracking">Track Order</a></li>
+                    <li><a href="/Wishlist">Wishlist</a></li>
+                    <li><a href="/Cart">Cart</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <h6>Contact</h6>
+                <ul class="footer-links">
+                    <li><a href="/Contact"><i class="bi bi-envelope me-2"></i>@Model.ContactEmail</a></li>
+                    <li><a href="tel:@Model.ContactPhone"><i class="bi bi-telephone me-2"></i>@Model.ContactPhone</a></li>
+                    <li><i class="bi bi-geo-alt me-2"></i>@Model.Address</li>
+                </ul>
+            </div>
+        </div>
+        <hr class="footer-divider" />
+        <div class="footer-bottom">
+            <span>&copy; @DateTime.Now.Year @Model.SiteName. All rights reserved.</span>
+            <span>Crafted with intention.</span>
+        </div>
+    </div>
+</footer>

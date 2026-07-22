@@ -1,0 +1,147 @@
+@model List<ApparelShop.Models.Product>
+@using ApparelShop.Models
+@using ApparelShop.ViewComponents
+@{
+    ViewData["Title"] = "Shop";
+    var categories = ViewBag.Categories as List<Category> ?? new();
+    int page = ViewBag.Page;
+    int totalPages = ViewBag.TotalPages;
+    string? currentCategory = ViewBag.CurrentCategory;
+    string? sort = ViewBag.Sort;
+    string? filter = ViewBag.Filter;
+    string? q = ViewBag.SearchTerm;
+    decimal? minPrice = ViewBag.MinPrice;
+    decimal? maxPrice = ViewBag.MaxPrice;
+    decimal priceMin = ViewBag.PriceMin;
+    decimal priceMax = ViewBag.PriceMax;
+}
+
+<div class="container my-5">
+    @await Component.InvokeAsync("Breadcrumbs", new List<BreadcrumbItem>
+    {
+        new() { Text = "Home", Url = "/" },
+        new() { Text = string.IsNullOrEmpty(q) ? "Shop" : $"Search: {q}" }
+    })
+
+    <div class="section-heading">
+        <div class="subtitle">Collection</div>
+        <h2>@(string.IsNullOrEmpty(q) ? "All Products" : $"Results for \"{q}\"")</h2>
+    </div>
+
+    <div class="row">
+        <aside class="col-md-3 filter-sidebar mb-4">
+            <h6>Category</h6>
+            <div class="mb-2">
+                <a href="/shop" class="filter-link @(currentCategory == null ? "active" : "")">All Products</a>
+            </div>
+            @foreach (var cat in categories)
+            {
+                <div class="mb-1">
+                    <a href="/shop?category=@cat.Slug" class="filter-link @(currentCategory == cat.Slug ? "active" : "")">@cat.Name</a>
+                </div>
+            }
+
+            <h6>Filter</h6>
+            <div class="mb-1">
+                <a href="/shop?filter=new" class="filter-link @(filter == "new" ? "active" : "")">New Arrivals</a>
+            </div>
+            <div class="mb-1">
+                <a href="/shop?filter=featured" class="filter-link @(filter == "featured" ? "active" : "")">Featured</a>
+            </div>
+            <div class="mb-1">
+                <a href="/shop?filter=sale" class="filter-link @(filter == "sale" ? "active" : "")">On Sale</a>
+            </div>
+
+            <h6>Price Range</h6>
+            <form method="get" id="priceFilterForm">
+                @if (!string.IsNullOrEmpty(currentCategory)) { <input type="hidden" name="category" value="@currentCategory" /> }
+                @if (!string.IsNullOrEmpty(filter)) { <input type="hidden" name="filter" value="@filter" /> }
+                @if (!string.IsNullOrEmpty(q)) { <input type="hidden" name="q" value="@q" /> }
+                @if (!string.IsNullOrEmpty(sort)) { <input type="hidden" name="sort" value="@sort" /> }
+                <div class="d-flex gap-2 mb-2">
+                    <input type="number" name="minPrice" class="form-control form-control-sm" placeholder="Min" value="@minPrice" min="@priceMin" max="@priceMax" style="font-size:0.82rem;" />
+                    <input type="number" name="maxPrice" class="form-control form-control-sm" placeholder="Max" value="@maxPrice" min="@priceMin" max="@priceMax" style="font-size:0.82rem;" />
+                </div>
+                <button type="submit" class="btn btn-sm btn-outline-dark-custom w-100">Apply Filter</button>
+                @if (minPrice.HasValue || maxPrice.HasValue)
+                {
+                    <a href="/shop?category=@currentCategory&filter=@filter&q=@q&sort=@sort" class="btn btn-sm btn-ghost w-100 mt-1 small text-muted">Clear Filter</a>
+                }
+            </form>
+        </aside>
+
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <span class="text-muted small">@Model.Count product(s)</span>
+                <form method="get" class="d-flex align-items-center">
+                    @if (!string.IsNullOrEmpty(currentCategory)) { <input type="hidden" name="category" value="@currentCategory" /> }
+                    @if (!string.IsNullOrEmpty(filter)) { <input type="hidden" name="filter" value="@filter" /> }
+                    @if (!string.IsNullOrEmpty(q)) { <input type="hidden" name="q" value="@q" /> }
+                    @if (minPrice.HasValue) { <input type="hidden" name="minPrice" value="@minPrice" /> }
+                    @if (maxPrice.HasValue) { <input type="hidden" name="maxPrice" value="@maxPrice" /> }
+                    <label class="me-2 small text-muted">Sort:</label>
+                    <select name="sort" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+                        <option value="">Newest</option>
+                        <option value="price_asc" selected="@(sort == "price_asc")">Price: Low to High</option>
+                        <option value="price_desc" selected="@(sort == "price_desc")">Price: High to Low</option>
+                        <option value="name" selected="@(sort == "name")">Name A-Z</option>
+                    </select>
+                </form>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-search" style="font-size:3rem;color:#ddd;"></i>
+                    <p class="text-muted mt-3 mb-4">No products found. Try a different filter or search term.</p>
+                    <a href="/shop" class="btn btn-accent">Browse All Products</a>
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var p in Model)
+                    {
+                        <div class="col-6 col-lg-4">
+                            @await Html.PartialAsync("_ProductCard", p)
+                        </div>
+                    }
+                </div>
+
+                @if (totalPages > 1)
+                {
+                    <nav class="mt-5">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item @(page <= 1 ? "disabled" : "")">
+                                <a class="page-link" href="/shop?page=@(page - 1)&category=@currentCategory&sort=@sort&filter=@filter&q=@q&minPrice=@minPrice&maxPrice=@maxPrice">&laquo; Prev</a>
+                            </li>
+                            @{
+                                int startPage = Math.Max(1, page - 2);
+                                int endPage = Math.Min(totalPages, page + 2);
+                                if (startPage > 1)
+                                {
+                                    <li class="page-item"><a class="page-link" href="/shop?page=1&category=@currentCategory&sort=@sort&filter=@filter&q=@q&minPrice=@minPrice&maxPrice=@maxPrice">1</a></li>
+                                    if (startPage > 2) { <li class="page-item disabled"><span class="page-link">...</span></li> }
+                                }
+                                for (int i = startPage; i <= endPage; i++)
+                                {
+                                    <li class="page-item @(i == page ? "active" : "")">
+                                        <a class="page-link" href="/shop?page=@i&category=@currentCategory&sort=@sort&filter=@filter&q=@q&minPrice=@minPrice&maxPrice=@maxPrice">@i</a>
+                                    </li>
+                                }
+                                if (endPage < totalPages)
+                                {
+                                    if (endPage < totalPages - 1) { <li class="page-item disabled"><span class="page-link">...</span></li> }
+                                    <li class="page-item"><a class="page-link" href="/shop?page=@totalPages&category=@currentCategory&sort=@sort&filter=@filter&q=@q&minPrice=@minPrice&maxPrice=@maxPrice">@totalPages</a></li>
+                                }
+                            }
+                            <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                                <a class="page-link" href="/shop?page=@(page + 1)&category=@currentCategory&sort=@sort&filter=@filter&q=@q&minPrice=@minPrice&maxPrice=@maxPrice">Next &raquo;</a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            }
+        </div>
+    </div>
+</div>

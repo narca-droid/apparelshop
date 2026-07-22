@@ -1,0 +1,95 @@
+@model ApparelShop.Models.SiteSetting
+@using ApparelShop.Models
+@{
+    var categories = ViewBag.Categories as List<Category> ?? new List<Category>();
+}
+@if (!string.IsNullOrEmpty(Model.Tagline))
+{
+    <div class="announcement-bar">
+        <span>@Model.Tagline</span>
+    </div>
+}
+<header class="site-header">
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                {
+                    <img src="@Model.LogoUrl" alt="@Model.SiteName" class="brand-logo me-2" />
+                }
+                <span class="brand-name">@Model.SiteName</span>
+            </a>
+
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav mx-auto main-nav">
+                    <li class="nav-item"><a class="nav-link" href="/shop">Shop</a></li>
+                    @foreach (var cat in categories)
+                    {
+                        <li class="nav-item"><a class="nav-link" href="/shop?category=@cat.Slug">@cat.Name</a></li>
+                    }
+                    <li class="nav-item"><a class="nav-link" href="/Contact">Contact</a></li>
+                </ul>
+
+                <div class="d-flex align-items-center header-icons">
+                    <div class="d-none d-lg-flex position-relative search-wrapper me-3">
+                        <form action="/shop" method="get" class="search-form" id="desktopSearchForm">
+                            <input type="text" name="q" class="form-control form-control-sm" placeholder="Search..." aria-label="Search products" id="desktopSearchInput" autocomplete="off" />
+                        </form>
+                        <div id="searchSuggestions" class="search-suggestions" style="display:none;"></div>
+                    </div>
+
+                    <a href="#" id="mobileSearchToggle" class="nav-link d-lg-none me-2" title="Search" aria-label="Search">
+                        <i class="bi bi-search"></i>
+                    </a>
+
+                    @if (User.Identity?.IsAuthenticated ?? false)
+                    {
+                        <a href="/Account/Dashboard" class="nav-link d-none d-md-inline me-1" title="My Account" aria-label="My Account">
+                            <i class="bi bi-person"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="/Account/Login" class="nav-link d-none d-md-inline me-1" title="Sign In" aria-label="Sign In">
+                            <i class="bi bi-person"></i>
+                        </a>
+                    }
+
+                    <a href="/Wishlist" class="nav-link position-relative me-1" title="Wishlist" aria-label="Wishlist">
+                        <i class="bi bi-heart"></i>
+                        <span id="wishlist-count-badge" class="wishlist-badge" style="display:none;">0</span>
+                    </a>
+
+                    <a href="/Cart" class="nav-link position-relative me-1" title="Cart" aria-label="Cart">
+                        <i class="bi bi-bag"></i>
+                        <span id="cart-count-badge" class="cart-badge">0</span>
+                    </a>
+
+                    <a href="/Checkout/Tracking" class="nav-link d-none d-md-inline me-1" title="Track Order" aria-label="Track Order">
+                        <i class="bi bi-truck"></i>
+                    </a>
+
+                    @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+                    {
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="nav-link d-none d-md-inline ms-2" title="Admin" aria-label="Admin">
+                            <i class="bi bi-gear"></i>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="container d-lg-none d-none" id="mobileSearchForm">
+            <form action="/shop" method="get" class="py-3">
+                <div class="input-group">
+                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Search products..." aria-label="Search products" />
+                    <button class="btn btn-sm btn-outline-dark" type="submit"><i class="bi bi-search"></i></button>
+                </div>
+            </form>
+        </div>
+    </nav>
+</header>

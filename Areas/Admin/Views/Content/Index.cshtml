@@ -1,0 +1,32 @@
+@model List<ApparelShop.Models.ContentBlock>
+@{ ViewData["Title"] = "Content Pages"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Content Pages</h3>
+    <a asp-action="Create" class="btn btn-accent"><i class="bi bi-plus-lg me-1"></i>Add Page</a>
+</div>
+<p class="text-muted small">These power flexible pages like About Us and Shipping Policy, viewable at <code>/page/{key}</code>. The homepage announcement bar can also be driven from a block with key <code>promo-banner-top</code>.</p>
+
+<div class="stat-card p-0">
+    <table class="table mb-0 align-middle">
+        <thead class="table-light"><tr><th>Title</th><th>Key / URL</th><th>Status</th><th>Updated</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var b in Model)
+            {
+                <tr>
+                    <td>@b.Title</td>
+                    <td><code>/page/@b.Key</code></td>
+                    <td>@(b.IsActive ? "Active" : "Hidden")</td>
+                    <td>@b.UpdatedAt.ToString("dd MMM yyyy")</td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-outline-dark-custom">Edit</a>
+                        <form asp-action="Delete" asp-route-id="@b.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this page?');">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

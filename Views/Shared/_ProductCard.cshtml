@@ -1,0 +1,31 @@
+@model ApparelShop.Models.Product
+<div class="product-card">
+    <a href="/shop/product/@Model.Slug">
+        <div class="product-image-wrap">
+            <img src="@(Model.MainImageUrl ?? "/images/hero.svg")" alt="@Model.Name" loading="lazy" />
+            @if (Model.OnSale)
+            {
+                <span class="badge-sale">-@Model.DiscountPercent%</span>
+            }
+            @if (Model.IsNewArrival && !Model.OnSale)
+            {
+                <span class="badge-new">New</span>
+            }
+            <div class="product-quick-add">
+                <a href="/shop/product/@Model.Slug">Quick View</a>
+            </div>
+        </div>
+        <div class="product-name">@Model.Name</div>
+    </a>
+    <div class="product-price">
+        @if (Model.OnSale)
+        {
+            <span class="original">AED @Model.CompareAtPrice!.Value.ToString("0.00")</span>
+            <span class="sale">AED @Model.Price.ToString("0.00")</span>
+        }
+        else
+        {
+            <span class="current">AED @Model.Price.ToString("0.00")</span>
+        }
+    </div>
+</div>

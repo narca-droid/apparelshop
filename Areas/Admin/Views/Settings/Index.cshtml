@@ -1,0 +1,158 @@
+@model ApparelShop.Models.SiteSetting
+@{ ViewData["Title"] = "Site & Layout Settings"; }
+
+<h3 class="mb-4">Site & Layout Settings</h3>
+
+<form asp-action="Index" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="stat-card mb-3">
+                <h6 class="mb-3">Branding</h6>
+                <div class="mb-3">
+                    <label class="form-label">Site Name</label>
+                    <input asp-for="SiteName" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tagline</label>
+                    <input asp-for="Tagline" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Logo</label>
+                    @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                    {
+                        <img src="@Model.LogoUrl" style="height:40px;" class="d-block mb-2" />
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="removeLogo" value="true" id="removeLogo">
+                            <label class="form-check-label text-danger small" for="removeLogo">Remove current logo</label>
+                        </div>
+                    }
+                    <input type="file" name="logo" class="form-control" accept="image/*" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Favicon</label>
+                    @if (!string.IsNullOrEmpty(Model.FaviconUrl))
+                    {
+                        <img src="@Model.FaviconUrl" style="height:24px;" class="d-block mb-2" />
+                    }
+                    <input type="file" name="favicon" class="form-control" accept="image/*" />
+                </div>
+            </div>
+
+            <div class="stat-card mb-3">
+                <h6 class="mb-3">Theme Colors</h6>
+                <div class="row g-3">
+                    <div class="col-4">
+                        <label class="form-label small">Primary (text/nav)</label>
+                        <input asp-for="PrimaryColor" type="color" class="form-control form-control-color w-100" />
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small">Accent (buttons)</label>
+                        <input asp-for="AccentColor" type="color" class="form-control form-control-color w-100" />
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small">Background</label>
+                        <input asp-for="BackgroundColor" type="color" class="form-control form-control-color w-100" />
+                    </div>
+                </div>
+                <p class="small text-muted mt-2 mb-0">These colors apply site-wide instantly upon save.</p>
+            </div>
+
+            <div class="stat-card mb-3">
+                <h6 class="mb-3">Homepage Sections</h6>
+                <div class="form-check mb-2">
+                    <input asp-for="ShowFeaturedSection" class="form-check-input" type="checkbox" checked="@Model.ShowFeaturedSection" />
+                    <label class="form-check-label">Show "Featured Pieces" section</label>
+                </div>
+                <div class="form-check">
+                    <input asp-for="ShowNewArrivalsSection" class="form-check-input" type="checkbox" checked="@Model.ShowNewArrivalsSection" />
+                    <label class="form-check-label">Show "New Arrivals" section</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="stat-card mb-3">
+                <h6 class="mb-3">Homepage Hero Banner</h6>
+                <div class="mb-3">
+                    <label class="form-label">Headline</label>
+                    <input asp-for="HeroHeadline" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Subtext</label>
+                    <textarea asp-for="HeroSubtext" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Button Text</label>
+                        <input asp-for="HeroButtonText" class="form-control" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Button Link</label>
+                        <input asp-for="HeroButtonUrl" class="form-control" />
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Background Image</label>
+                    @if (!string.IsNullOrEmpty(Model.HeroImageUrl))
+                    {
+                        <img src="@Model.HeroImageUrl" style="width:100%;max-height:120px;object-fit:cover;" class="d-block mb-2" />
+                    }
+                    <input type="file" name="heroImage" class="form-control" accept="image/*" />
+                </div>
+            </div>
+
+            <div class="stat-card mb-3">
+                <h6 class="mb-3">Contact & Footer</h6>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Contact Email</label>
+                        <input asp-for="ContactEmail" class="form-control" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Contact Phone</label>
+                        <input asp-for="ContactPhone" class="form-control" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Address</label>
+                    <input asp-for="Address" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Footer About Text</label>
+                    <textarea asp-for="FooterAboutText" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="row g-3">
+                    <div class="col-4">
+                        <label class="form-label small">Instagram URL</label>
+                        <input asp-for="InstagramUrl" class="form-control" />
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small">Facebook URL</label>
+                        <input asp-for="FacebookUrl" class="form-control" />
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small">TikTok URL</label>
+                        <input asp-for="TiktokUrl" class="form-control" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card mb-3">
+                <h6 class="mb-3">SEO</h6>
+                <div class="mb-3">
+                    <label class="form-label">Meta Title</label>
+                    <input asp-for="MetaTitle" class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label">Meta Description</label>
+                    <textarea asp-for="MetaDescription" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-accent px-5 py-2">Save All Changes</button>
+</form>

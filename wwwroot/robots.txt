@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /Admin/
+Disallow: /Account/Dashboard
+Disallow: /Account/Profile
+Disallow: /api/
+
+Sitemap: https://www.jkapparel.com/sitemap.xml

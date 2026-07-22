@@ -1,0 +1,149 @@
+@using ApparelShop.Models
+@{
+    var settings = ViewBag.Settings as SiteSetting;
+    var categories = ViewBag.Categories as List<Category> ?? new();
+    var featured = ViewBag.Featured as List<Product>;
+    var newArrivals = ViewBag.NewArrivals as List<Product>;
+    var recentlyViewed = ViewBag.RecentlyViewed as List<Product>;
+    ViewData["Title"] = "Home";
+}
+
+<section class="hero-section" style="background-image:url('@(string.IsNullOrEmpty(settings?.HeroImageUrl) ? "/images/hero.svg" : settings.HeroImageUrl)')">
+    <div class="hero-overlay"></div>
+    <div class="container">
+        <div class="hero-content">
+            <h1>@settings?.HeroHeadline</h1>
+            <p>@settings?.HeroSubtext</p>
+            <a href="@(settings?.HeroButtonUrl ?? "/shop")" class="btn btn-accent">
+                @(settings?.HeroButtonText ?? "Shop Now")
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+@if (categories.Any())
+{
+    <section class="container my-5 pt-5">
+        <div class="section-heading fade-in">
+            <div class="subtitle">Explore</div>
+            <h2>Shop by Category</h2>
+        </div>
+        <div class="row g-4">
+            @foreach (var cat in categories)
+            {
+                <div class="col-6 col-md-3 fade-in">
+                    <a href="/shop?category=@cat.Slug" class="category-tile" style="background-image:url('@(string.IsNullOrEmpty(cat.ImageUrl) ? "/images/hero.svg" : cat.ImageUrl)')">
+                        <span class="tile-label">@cat.Name</span>
+                    </a>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@if (featured is { Count: > 0 })
+{
+    <section class="container my-5 py-4">
+        <div class="section-heading fade-in">
+            <div class="subtitle">Curated</div>
+            <h2>Featured Pieces</h2>
+        </div>
+        <div class="row g-4">
+            @foreach (var p in featured)
+            {
+                <div class="col-6 col-md-3 fade-in">
+                    @await Html.PartialAsync("_ProductCard", p)
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@if (newArrivals is { Count: > 0 })
+{
+    <section class="container my-5 py-4">
+        <div class="section-heading fade-in">
+            <div class="subtitle">Just Landed</div>
+            <h2>New Arrivals</h2>
+        </div>
+        <div class="row g-4">
+            @foreach (var p in newArrivals)
+            {
+                <div class="col-6 col-md-3 fade-in">
+                    @await Html.PartialAsync("_ProductCard", p)
+                </div>
+            }
+        </div>
+        <div class="text-center mt-5">
+            <a href="/shop" class="btn btn-outline-dark-custom">
+                View All Products
+                <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </section>
+}
+
+@if (recentlyViewed is { Count: > 0 })
+{
+    <section class="container my-5 py-4">
+        <div class="section-heading fade-in">
+            <div class="subtitle">Browsed</div>
+            <h2>Recently Viewed</h2>
+        </div>
+        <div class="row g-4">
+            @foreach (var p in recentlyViewed.Take(4))
+            {
+                <div class="col-6 col-md-3 fade-in">
+                    @await Html.PartialAsync("_ProductCard", p)
+                </div>
+            }
+        </div>
+    </section>
+}
+
+<section class="container my-5 py-5 fade-in">
+    <div class="row align-items-center g-5">
+        <div class="col-md-6">
+            <div class="section-heading text-start" style="margin-bottom:1.5rem;">
+                <div class="subtitle">Our Promise</div>
+                <h2>Designed to Last</h2>
+            </div>
+            <p class="text-muted mb-4" style="line-height:1.8;max-width:440px;">
+                Every piece in our collection is chosen for quality, fit, and longevity. We believe in slow fashion — considered pieces that transcend trends and become part of your everyday story.
+            </p>
+            <a href="/page/about-page" class="btn btn-outline-dark-custom">
+                Learn More
+                <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="col-md-6">
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="p-4 text-center" style="background:#f8f7f4;border-radius:var(--radius-md);">
+                        <div style="font-family:var(--font-serif);font-size:2rem;font-weight:700;color:var(--color-accent);">UAE</div>
+                        <div class="small text-muted mt-1">Designed in</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-4 text-center" style="background:#f8f7f4;border-radius:var(--radius-md);">
+                        <div style="font-family:var(--font-serif);font-size:2rem;font-weight:700;color:var(--color-accent);">2-4</div>
+                        <div class="small text-muted mt-1">Day delivery</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-4 text-center" style="background:#f8f7f4;border-radius:var(--radius-md);">
+                        <div style="font-family:var(--font-serif);font-size:2rem;font-weight:700;color:var(--color-accent);">14</div>
+                        <div class="small text-muted mt-1">Day returns</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-4 text-center" style="background:#f8f7f4;border-radius:var(--radius-md);">
+                        <div style="font-family:var(--font-serif);font-size:2rem;font-weight:700;color:var(--color-accent);">COD</div>
+                        <div class="small text-muted mt-1">Pay on delivery</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
