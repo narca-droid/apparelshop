@@ -11,7 +11,7 @@ appsettings.Development.json
 https/
 
 # Docker data
-data/
+DockerData/
 
 # Environment files
 .env
